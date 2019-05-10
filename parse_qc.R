@@ -93,7 +93,7 @@ message(sprintf("\nSaved output to %s.", flagstat_csv))
 
 # Bedtools coverageBed ============================================================================
 message("\nParsing bedtools coverageBed output files:")
-bed_files <- list.files(input_dir, pattern=".*bed$", recursive=TRUE, full.names=TRUE)
+bed_files <- list.files(input_dir, pattern=".*\\.coverage\\.report\\.bed$", recursive=TRUE, full.names=TRUE)
 
 # Parse bedtools coverageBed output
 hist_list <- list()
@@ -104,9 +104,10 @@ hist_list <- foreach(bed_file=bed_files) %dopar% {
   message(sprintf('Parsing input file %s', bed_file))
   hist <- fread(bed_file)
   setDT(hist)
-  setnames(
-    hist, 
-    c('chr','start','end','ref','overlapping_features','non_0_cov_bases','length','non_0_cov_bases_fraction'))
+  bedcolnames <- paste0("V",1:ncol(hist))
+  bedcolnames[c(1:3,(length(bedcolnames)-3):length(bedcolnames))] <- 
+    c('chr','start','end','overlapping_features','non_0_cov_bases','length','non_0_cov_bases_fraction')
+  setnames(hist, bedcolnames)
   hist
 }
 
@@ -165,7 +166,7 @@ message(sprintf("\nSaved output to %s.", cov_pdf))
 
 # Bedtools coverageBed -hist ======================================================================
 message("\nParsing bedtools coverageBed -hist output files:")
-report_all_files <- list.files(input_dir, pattern=".*all\\.coverage\\.report$", recursive=TRUE, full.names=TRUE)
+report_all_files <- list.files(input_dir, pattern=".*\\.coverage\\.report$", recursive=TRUE, full.names=TRUE)
 
 cov_list <- lapply(report_all_files, function(file){
   message(sprintf('Parsing input file %s', file))
@@ -174,7 +175,7 @@ cov_list <- lapply(report_all_files, function(file){
   df[,cov_cumul:=1-cumsum(fraction_cov)]
   df[2:.N,.(cov,cov_cumul)]
 })
-samples <- str_replace(basename(report_all_files), '\\.all\\.coverage\\.report', '')
+samples <- str_replace(basename(report_all_files), '\\.coverage\\.report', '')
 names(cov_list) <- samples
 cov_DT <- rbindlist(cov_list, idcol='sample')
 

@@ -11,9 +11,7 @@ mapping_qc() {
     samtools flagstat "$1" >> "$1"".stats"
     
     # run bedtools to determine on-target reads
-    bedtools intersectBed \\
-    -a "$1" -b $target_bed -u -wa \\
-    > "$1"".ontarget.bam"
+    intersectBed -a "$1" -b $target_bed -u -wa > "$1"".ontarget.bam"
     
     # run samtools to get statistics on the on-target mapped reads
     echo '## Flagstat after filtering off-target reads' >> "$1"".stats"
@@ -23,18 +21,11 @@ mapping_qc() {
     rm "$1"".ontarget.bam"
 
     # run bedtools to generate a histogram coverage files
-    bedtools coverageBed -hist \\
-    -a $target_bed -b "$1" -sorted -g $bedtools_genome_file \\
-    | grep ^all > "$1"".coverage.report"
+    coverageBed -hist -a $target_bed -b "$1" -sorted -g $bedtools_genome_file | grep ^all > "$1"".coverage.report"
     
     # run bedtools to generate coverage for target bed
-    bedtools coverageBed \\
-    -a $target_bed -b "$1" -sorted -g $bedtools_genome_file \\
-    > "$1"".coverage.report.bed"
+    coverageBed -a $target_bed -b "$1" -sorted -g $bedtools_genome_file > "$1"".coverage.report.bed"
 
-    # sort premissions
-    chmod -R 775 "$1""*.*"
-    
 }
 
 for bam in "$input_dir"/*/*.bam; do mapping_qc "$bam" & done
